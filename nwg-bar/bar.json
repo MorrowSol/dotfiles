@@ -1,0 +1,22 @@
+[
+  {
+    "label": "Lock",
+    "exec": "swaylock --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.7:0.9  --ring-color 24b7ff --key-hl-color 00ff00 --line-color 00000000 --inside-color 00000088 --separator-color 00000000 --grace 2 --fade-in 0.2",
+    "icon": "/usr/share/nwg-bar/images/system-lock-screen.svg"
+  },
+  {
+    "label": "Logout",
+    "exec": "swaymsg exit",
+    "icon": "/usr/share/nwg-bar/images/system-log-out.svg"
+  },
+  {
+    "label": "Reboot",
+    "exec": "systemctl reboot",
+    "icon": "/usr/share/nwg-bar/images/system-reboot.svg"
+  },
+  {
+    "label": "Shutdown",
+    "exec": "systemctl -i poweroff",
+    "icon": "/usr/share/nwg-bar/images/system-shutdown.svg"
+  }
+]
