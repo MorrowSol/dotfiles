@@ -1,0 +1,8 @@
+@theme "~/.config/rofi/themes/rounded-nord-dark.rasi"
+
+configuration{
+    show-icons: true;
+}
+window{
+    width: 30%;
+}

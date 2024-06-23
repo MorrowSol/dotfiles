@@ -1,0 +1,180 @@
+{
+    "layer": "top", // Waybar at top layer
+    "position": "top", // Waybar position (top|bottom|left|right)
+    "height": 39, // Waybar height (to be removed for auto height)
+    // "width": 1280, // Waybar width
+    "spacing": 0, // Gaps between modules (4px)
+    "modules-left": [
+        "custom/launcher",
+        "hyprland/workspaces",       
+        "wlr/taskbar",
+        "hyprland/window"
+    ],
+    "modules-center": [
+        "custom/pacman",
+        "clock",
+        "custom/wallpaper"
+    ],
+    "modules-right": [
+        "network",
+        "bluetooth",
+        "backlight",
+        "pulseaudio",
+        "tray",
+        "custom/notification",
+        "battery",
+        "custom/power"
+    ],
+    "wlr/taskbar": {
+        "format": "{icon}",
+        "icon-size": 24,
+        "on-click": "activate"
+    },
+    "custom/launcher": {
+        "format": " ",
+        "on-click": "rofi -show drun",
+        "on-click-right": "killall wofi"
+    },
+    "hyprland/workspaces": {
+        "format": "{name}",
+        "persistent-workspaces": {
+            "DP-3": [2,3,4,5],
+            "eDP-1": [1,7]
+        }
+    },
+    "hyprland/window": {
+        "format": "{}",
+        "separate-outputs": true
+    },
+    "custom/pacman": {
+        "format": "󰏕 {}",
+        "interval": 3600,
+        "exec": "paru -Qu | wc -l"
+    },
+    "clock": {
+        "interval": 60,
+        "format": "{:%Y-%m-%d %H:%M}",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode": "year",
+            "mode-mon-col": 3,
+            "weeks-pos": "right",
+            "on-scroll": 1,
+            "on-click-right": "mode",
+            "format": {
+                "months": "<span color='#ffead3'><b>{}</b></span>",
+                "days": "<span color='#ecc6d9'><b>{}</b></span>",
+                "weeks": "<span color='#99ffdd'><b>W{}</b></span>",
+                "weekdays": "<span color='#ffcc66'><b>{}</b></span>",
+                "today": "<span color='#ff6699'><b><u>{}</u></b></span>"
+            }
+        },
+        "actions": {
+            "on-click-right": "mode",
+            "on-click-forward": "tz_up",
+            "on-click-backward": "tz_down",
+            "on-scroll-up": "shift_down",
+            "on-scroll-down": "shift_up"
+        }
+    },
+    "custom/wallpaper":{
+        "format": "",
+        "tooltip-format": "change wallpaper",
+        "on-click" : "sh ~/.config/hypr/change_wallpaper.sh | notify-send 'wallpaper changed'"
+    },
+    "network": {
+        // "interface": "wlp2*", // (Optional) To force the use of this interface
+        "format-wifi": "  {bandwidthDownBytes}",
+        // "format-ethernet": " {ipaddr}/{cidr}",
+        "tooltip-format": "{ifname}\n{essid} ({signalStrength}%)\nipv4: {ipaddr}/{cidr}\ngate: {gwaddr}",
+        "format-linked": " {ifname} (No IP)",
+        "format-disconnected": "⚠ Disconnected",
+        // "format-alt": "{essid} ({signalStrength}%)",
+        "interval": 3
+    },
+    "bluetooth": {
+        "format": " {status}",
+        "format-connected": "",
+        "format-connected-battery": " {device_battery_percentage}%",
+        // "format-device-preference": [ "device1", "device2" ], // preference list deciding the displayed device
+        "tooltip-format": "{controller_alias}\t{controller_address}\n\n{num_connections} connected",
+        "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
+        "tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_address}\t{device_battery_percentage}%",
+        // 左键开，右键关
+        "on-click": "bluetoothctl power on",
+        "on-click-right": "bluetoothctl power off",
+    },
+    "backlight": {
+        "tooltip": false,
+        "format": " {}%",
+        "interval": 1,
+        "on-scroll-up": "light -A 5",
+        "on-scroll-down": "light -U 5"
+    },
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": " ",
+        "on-click": "~/.config/waybar/volume --toggle",
+        "on-click-right": "pavucontrol",
+        "on-scroll-up": "~/.config/waybar/volume --inc",
+        "on-scroll-down": "~/.config/waybar/volume --dec",
+        "scroll-step": 5,
+        "format-icons": {
+            "headphone": "",
+            "hands-free": "",
+            "headset": "",
+            "phone": "",
+            "portable": "",
+            "car": "",
+            "default": ["", "", ""]
+        }
+    },
+    "tray": {
+        "icon-size": 18,
+        "spacing": 10
+    },
+    "battery": {
+        "states": {
+            "good": 95,
+            "warning": 30,
+            "critical": 20
+        },
+        "interval": 10,
+        "format": "{icon}  {capacity}%",
+        "format-charging": " {capacity}%",
+        "format-plugged": " {capacity}%",
+        "format-alt": "{time} {icon}",
+        "format-icons": [
+            "",
+            "",
+            "",
+            "",
+            ""
+        ]
+    },
+    "custom/notification": {
+        "tooltip": false,
+        "format": "{icon}",
+        "format-icons": {
+          "notification": "<span foreground='red'><sup></sup></span>",
+          "none": "",
+          "dnd-notification": "<span foreground='red'><sup></sup></span>",
+          "dnd-none": "",
+          "inhibited-notification": "<span foreground='red'><sup></sup></span>",
+          "inhibited-none": "",
+          "dnd-inhibited-notification": "<span foreground='red'><sup></sup></span>",
+          "dnd-inhibited-none": ""
+        },
+        "return-type": "json",
+        "exec-if": "which swaync-client",
+        "exec": "swaync-client -swb",
+        "on-click": "swaync-client -t -sw",
+        "on-click-right": "swaync-client -d -sw",
+        "escape": true
+    },
+    "custom/power": {
+        "format": "",
+        "on-click": "sh ~/.config/wlogout/wlogout.sh"
+    }
+}
