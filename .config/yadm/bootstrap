@@ -1,1 +1,385 @@
-echo "bootstrap test"
+print_red() {
+    local text="$1"
+    echo -e "\033[31m${text}\033[0m"
+}
+print_green() {
+    local text="$1"
+    echo -e "\033[32m${text}\033[0m"
+}
+print_yellow() {
+    local text="$1"
+    echo -e "\033[33m${text}\033[0m"
+}
+print_blue() {
+    local text="$1"
+    echo -e "\033[36m${text}\033[0m"
+}
+
+print_blue "\n#############  yadm bootstrap run  ##############\n"
+
+# ===========================================================
+# install paru
+# 检查是否已经存在[archlinuxcn]部分
+if grep -q "\[archlinuxcn\]" /etc/pacman.conf; then
+    print_yellow "[archlinuxcn] section already exists in /etc/pacman.conf."
+else
+    # 添加[archlinuxcn]部分到pacman.conf
+    echo "[archlinuxcn]" >> /etc/pacman.conf
+    echo "Server = https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/\$arch" >> /etc/pacman.conf
+    print_green "Arch Linux CN mirror added to /etc/pacman.conf."
+fi
+
+# 同步包数据库
+echo "Syncing package databases..."
+sudo pacman -Sy
+echo "Package databases synced."
+echo ""
+
+# 检查是否已经安装了 archlinuxcn-keyring
+if sudo pacman -Qs archlinuxcn-keyring > /dev/null; then
+    print_yellow "archlinuxcn-keyring is already installed."
+else
+    # 安装 archlinuxcn-keyring
+    sudo pacman-key --lsign-key "farseerfc@archlinux.org"
+    sudo pacman -S --noconfirm archlinuxcn-keyring
+    print_green "archlinuxcn-keyring installed successfully."
+fi
+
+# 检查是否已安装paru
+if ! command -v paru &> /dev/null; then
+    echo "Paru is not installed. Installing paru..."
+    sudo pacman -S --noconfirm paru
+    if [ $? -ne 0 ]; then
+        print_red "Error: Paru installation failed."
+        exit 1
+    else
+        print_green "Paru installed successfully."
+    fi
+else
+    print_yellow "Paru is already installed."
+fi
+echo ""
+
+# ==============================================================
+# install software
+# 获取当前用户的用户名
+current_user=$(whoami)
+# 定义要安装的软件包名称数组
+must_have_packages=(
+    "hyprland"
+    "kitty"
+    "mako"
+    "pipewire"
+    "wireplumber"
+    "xdg-desktop-portal-hyprland"
+    "polkit-kde-agent"
+    "qt5-wayland"
+    "qt6-wayland"
+)
+desktop_env_packages=(
+    "sddm"                      # 桌面管理器
+    "qt5-graphicaleffects"      # 三个sddm主题需要
+    "qt5-quickcontrols2"
+    "qt5-svg"
+    "rofi-wayland"              # app launcher
+    "cliphist"                  # 剪贴板
+    "grim"                      # 截图
+    "slurp"                     
+    "swappy"                    
+    "nemo"                      # 文件管理器
+    "waybar"                    # bar
+    "bluez"                     # 蓝牙驱动
+    "bluez-utils"
+    "sof-firmware"              # 声卡驱动
+    "alsa-ucm-conf"
+    "alsa-utils"
+    "pulseaudio"
+    "pamixer"                   # 控制音量
+    "pavucontrol"               # 音量控制（图形）
+    "light"                     # 屏幕亮度
+    "wlogout"                   # 电源bar
+    "hyprpaper"                 # 壁纸
+    "hypridle"                  # 配合锁屏
+    "hyprlock"                  # 锁屏 archcn源
+    "ttf-jetbrains-mono-nerd"   # 字体
+    "adobe-source-han-sans-cn-fonts"
+    "adobe-source-han-serif-cn-fonts"
+    "bluetuith"                 # 蓝牙
+    "rsync"                     # 同步
+    "xorg-xrdb"                 # x11
+)
+utils_packages=(
+    "git"                       # git
+    "net-tools"                 # ip查看
+    "wget"                      # 下载
+    "downgrade"                 # 降级软件
+    "btop"                      # 任务管理器
+    "xarchiver"                 # 压缩软件
+    "unzip"                     
+    "lazygit"                   # git客户端
+    "swayimg"                   # 图像查看器
+    "mpv"                       # 视频播放器
+    "fd"                        
+    "ripgrep"
+    "neovim"
+    "neofetch"
+)
+common_packages=(
+    "firefox"                   # 浏览器
+    "filezilla"                 # ftp 
+    "visual-studio-code-bin"    # vscode
+    "linuxqq"                   # qq
+    "wechat-universal-bwrap"    # 微信
+    "clash-for-windows-bin"     # 代理
+    "typora-free"               # md
+    "discord"                   
+    
+)
+# 输入法数组
+input_method=(
+    # "fcitx5-im"    # 包组换具体包
+    "fcitx5"
+    "fcitx5-configtool"
+    "fcitx5-gtk"
+    "fcitx5-qt"
+    "fcitx5-chinese-addons"
+    "fcitx5-pinyin-zhwiki"
+)
+# 环境变量数组
+environment_variables=(
+    "QT_IM_MODULE=fcitx"
+    "XMODIFIERS=@im=fcitx"
+    "SDL_IM_MODULE=fcitx"
+    "GLFW_IM_MODULE=ibus"
+)
+
+install_packages(){
+    # 使用pacman安装每个软件包
+    for package_name in "${@}"; do
+
+        # 检查是否已经安装
+        if pacman -Q "$package_name" &>/dev/null; then
+            print_yellow "$package_name is already installed."
+            continue
+        fi
+        # 安装
+        echo "Installing $package_name..."
+        paru -S --noconfirm "$package_name"
+
+        # 检查安装是否成功
+        if [ $? -eq 0 ]; then
+            print_green "$package_name installed successfully."
+        else
+            print_red "Error: $package_name installation failed."
+        fi
+    done
+}
+
+# 添加环境变量到 /etc/environment
+add_environment_variables() {
+    for var in "${environment_variables[@]}"; do
+        # 检查环境变量是否已存在
+        if ! grep -q "^$var$" /etc/environment; then
+            echo "Adding $var to /etc/environment..."
+            echo "$var" | sudo tee -a /etc/environment
+            print_green "$var added successfully."
+        else
+            print_yellow "$var is already in /etc/environment."
+        fi
+    done
+}
+
+echo "---------------------------------"
+echo "安装系统必装包:"
+# 安装系统必装包
+install_packages "${must_have_packages[@]}"
+
+
+echo -e "\n---------------------------------"
+echo "安装桌面环境所需包:"
+# 安装桌面环境
+install_packages "${desktop_env_packages[@]}"
+
+# 检查 sddm 服务是否已启用
+if systemctl is-active --quiet sddm; then
+    print_yellow "sddm 服务已启用."
+else
+    # 如果服务未启用，则启动它
+    sudo systemctl enable sddm
+    print_green "启动 sddm 服务."
+fi
+
+# 检查 bluetooth 服务是否已启用
+if systemctl is-active --quiet bluetooth; then
+    print_yellow "bluetooth 服务已启用."
+else
+    # 如果服务未启用，则启动它
+    sudo systemctl enable bluetooth
+    print_green "启动 bluetooth 服务."
+fi
+
+echo "将当前用户加入到视频组:"
+# 检查当前用户是否属于video组
+if groups "$current_user" | grep -q '\bvideo\b'; then
+    print_yellow "User $current_user is already a member of the video group."
+else
+    # 添加当前用户到video组
+    sudo usermod -aG video "$current_user"
+    if [ $? -eq 0 ]; then
+        print_green "User $current_user has been added to the video group successfully."
+    else
+        print_red "Adding user $current_user to the video group failed."
+    fi
+fi
+
+
+echo -e "\n---------------------------------"
+echo "安装fcitx5输入法:"
+# 安装输入法
+install_packages "${input_method[@]}"
+# 添加系统变量
+add_environment_variables
+
+# 复制配置文件
+# 检查目标目录是否存在，如果不存在则创建
+config_dir="$HOME/.config"
+if [ ! -d "$config_dir" ]; then
+    mkdir -p "$config_dir"
+    print_green "Created directory: $config_dir"
+fi
+
+# # 复制配置目录到目标目录
+# config_directories=("fontconfig" "hypr" "mako" "waybar" "wlogout" "rofi" "kitty")
+# for directory in "${config_directories[@]}"; do
+#     if [ -d "$directory" ]; then
+#         if [ "$force_copy" = true ]; then
+#             cp -r "$directory" "$config_dir/"
+#             echo "Copied $directory to $config_dir/"
+#         else
+#             read -p "Directory $directory exists. What do you want to do? (o: Overwrite / s: Skip / a: Always overwrite / c: Cancel all): " answer
+#             case "$answer" in
+#                 [oO])
+#                     cp -r "$directory" "$config_dir/"
+#                     echo "Copied $directory to $config_dir/"
+#                     ;;
+#                 [sS])
+#                     echo "Skipping $directory."
+#                     ;;
+#                 [aA])
+#                     force_copy=true
+#                     cp -r "$directory" "$config_dir/"
+#                     echo "Copied $directory to $config_dir/"
+#                     ;;
+#                 [cC])
+#                     echo "Cancelling all."
+#                     break
+#                     ;;
+#                 *)
+#                     echo "Invalid option. Skipping $directory."
+#                     ;;
+#             esac
+#         fi
+#     else
+#         echo "Error: $directory does not exist or is not a directory."
+#     fi
+# done
+
+
+# 复制 sddm.conf 文件到 /etc/ 目录
+read -p "Do you want to copy sddm.conf to /etc/? (y/n): " answer
+if [[ $answer == [Yy]* ]]; then
+    if [ -f "$config_dir/sddm/sddm.conf" ]; then
+        sudo cp "$config_dir/sddm/sddm.conf" "/etc/"
+        print_green "Copied sddm.conf to /etc/"
+    else
+        print_red "Error: sddm.conf file not found or is not a regular file."
+    fi
+else
+    print_yellow "Copy operation cancelled."
+fi
+
+# 复制 sugar-candy 主题目录到 /usr/share/sddm/themes/ 目录
+read -p "Do you want to copy sugar-candy theme directory to /usr/share/sddm/themes/? (y/n): " answer
+if [[ $answer == [Yy]* ]]; then
+    if [ -d "$config_dir/sddm/sugar-candy" ]; then
+        sudo cp -r "$config_dir/sddm/sugar-candy" "/usr/share/sddm/themes/"
+        print_green "Copied sugar-candy theme directory to /usr/share/sddm/themes/"
+    else
+        print_red "Error: sugar-candy theme directory not found or is not a directory."
+    fi
+else
+    print_yellow "Copy operation cancelled."
+fi
+
+echo -e "\n---------------------------------"
+read -p "是否要安装工具软件包？(y/n): " choice
+case "$choice" in
+    y|Y )
+        echo "安装工具软件包..."
+        install_packages "${utils_packages[@]}"
+        ;;
+    n|N )
+        echo "用户选择不安装常用软件包."
+        ;;
+    * )
+        echo "无效的输入，选择不安装常用软件包."
+        ;;
+esac
+
+echo -e "\n---------------------------------"
+read -p "是否要安装常用软件包？可能比较慢，可以自行安装 (y/n): " choice
+case "$choice" in
+    y|Y )
+        echo "安装常用软件包..."
+        install_packages "${common_packages[@]}"
+        ;;
+    n|N )
+        echo "用户选择不安装常用软件包."
+        ;;
+    * )
+        echo "无效的输入，选择不安装常用软件包."
+        ;;
+esac
+
+# 检查是否已经安装了 Zsh
+if ! command -v zsh &> /dev/null; then
+    # 如果未安装 Zsh，则安装它
+    echo "正在安装 Zsh..."
+    sudo pacman -Syu zsh
+else
+    print_yellow "Zsh 已经安装."
+fi
+# 检查是否已经安装了 Oh My Zsh
+if [ -d "$HOME/.oh-my-zsh" ]; then
+    print_yellow "Oh My Zsh 已经安装."
+else
+    # 安装 Oh My Zsh
+    echo "安装 Oh My Zsh..."
+    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+fi
+
+# 检查并添加 zsh-autosuggestions 插件到 ~/.zshrc
+if ! grep -q "zsh-autosuggestions" ~/.zshrc; then
+    # 安装 zsh-autosuggestions 插件
+    echo "安装 zsh-autosuggestions 插件..."
+    git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    echo "添加 zsh-autosuggestions 插件到 ~/.zshrc..."
+    sed -i '/^plugins=/ s/)$/ zsh-autosuggestions)/' ~/.zshrc
+fi
+
+# 检查并添加 zsh-syntax-highlighting 插件到 ~/.zshrc
+if ! grep -q "zsh-syntax-highlighting" ~/.zshrc; then
+    # 安装 zsh-syntax-highlighting 插件
+    echo "安装 zsh-syntax-highlighting 插件..."
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+    echo "添加 zsh-syntax-highlighting 插件到 ~/.zshrc..."
+    sed -i '/^plugins=/ s/)$/ zsh-syntax-highlighting)/' ~/.zshrc
+
+fi
+
+if ! grep -q "sudo" ~/.zshrc; then
+    echo "添加 sudo 插件到 ~/.zshrc..."
+    sed -i '/^plugins=/ s/)$/ sudo)/' ~/.zshrc
+fi
+
+print_green "个人设置已完成！"
